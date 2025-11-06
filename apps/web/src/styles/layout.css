@@ -24,6 +24,10 @@
   }
 
   @media (max-width: 767px) {
+<<<<<<< HEAD
+=======
+
+>>>>>>> b-origin/playonly
     .snb-backdrop-left,
     .snb-backdrop-right {
       top: 3rem;

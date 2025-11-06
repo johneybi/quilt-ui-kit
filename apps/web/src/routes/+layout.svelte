@@ -53,7 +53,13 @@
 
         <div class="mx-auto flex w-full flex-1">
             {#if snbPosition === 'right'}
+<<<<<<< HEAD
                 <aside class="bg-subtle border-border my-5 hidden max-w-[320px] rounded-md border lg:block lg:flex-1">
+=======
+                <aside
+                    class="bg-subtle border-border my-5 hidden max-w-[320px] rounded-md border lg:block lg:flex-1"
+                >
+>>>>>>> b-origin/playonly
                     <!-- 여기에 오른쪽 사이드바 내용 추가 -->
                     <Panel />
                 </aside>
@@ -64,7 +70,13 @@
                 </aside>
             {/if}
 
+<<<<<<< HEAD
             <main class="flex-1 overflow-y-auto rounded-t-xl pt-1 md:py-5 lg:pe-6 xl:min-w-[824px] 2xl:px-6">
+=======
+            <main
+                class="flex-1 overflow-y-auto rounded-t-xl pt-1 md:py-5 lg:pe-6 xl:min-w-[824px] 2xl:px-6"
+            >
+>>>>>>> b-origin/playonly
                 {@render children()}
             </main>
             {#if snbPosition === 'right'}
@@ -74,7 +86,13 @@
             {/if}
 
             {#if snbPosition === 'left'}
+<<<<<<< HEAD
                 <aside class="bg-subtle border-border my-5 hidden max-w-[20rem] rounded-md border lg:block lg:flex-1">
+=======
+                <aside
+                    class="bg-subtle border-border my-5 hidden max-w-[20rem] rounded-md border lg:block lg:flex-1"
+                >
+>>>>>>> b-origin/playonly
                     <!-- 여기에 오른쪽 사이드바 내용 추가 -->
                     <Panel />
                 </aside>
@@ -83,7 +101,11 @@
     </div>
     <!-- 왼쪽 배너 - 절대 위치, 컨테이너 밖에 배치 -->
     <aside
+<<<<<<< HEAD
         class="fixed left-4 hidden min-[1780px]:block transition-all duration-300"
+=======
+        class="fixed left-4 hidden transition-all duration-300 min-[1780px]:block"
+>>>>>>> b-origin/playonly
         class:top-21={!isBannerUp}
         class:top-6={isBannerUp}
     >
@@ -91,7 +113,11 @@
     </aside>
     <!-- 오른쪽 배너 - 절대 위치, 컨테이너 밖에 배치 -->
     <aside
+<<<<<<< HEAD
         class="fixed right-4 hidden min-[1780px]:block transition-all duration-300"
+=======
+        class="fixed right-4 hidden transition-all duration-300 min-[1780px]:block"
+>>>>>>> b-origin/playonly
         class:top-21={!isBannerUp}
         class:top-6={isBannerUp}
     >
