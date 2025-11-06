@@ -68,11 +68,7 @@
         <!-- 로고 -->
         <div class="flex items-center">
             <a href="/" class="flex items-center">
-<<<<<<< HEAD
                 <img src="https://dummy.net/assets/logo.png" alt="logo" class="h-12" />
-=======
-                <img src={Logo} alt="damoang" class="h-12" />
->>>>>>> b-origin/playonly
             </a>
         </div>
 
@@ -203,8 +199,4 @@
 </div>
 
 <!-- 헤더 높이만큼 상단 패딩 추가 -->
-<<<<<<< HEAD
 <div class="sm:h-16 h-12"></div>
-=======
-<div class="h-12 sm:h-16"></div>
->>>>>>> b-origin/playonly

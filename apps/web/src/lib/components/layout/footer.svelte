@@ -39,11 +39,7 @@
     ];
 </script>
 
-<<<<<<< HEAD
 <footer class="w-full border-t border-dusty-300 bg-dusty-50 text-gray-800">
-=======
-<footer class="border-dusty-300 bg-dusty-50 w-full border-t text-gray-800">
->>>>>>> b-origin/playonly
     <!-- 상단 섹션 -->
     <div class="mx-auto container px-4 py-8">
         <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
