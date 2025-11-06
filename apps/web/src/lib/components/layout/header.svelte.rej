@@ -1,0 +1,16 @@
+diff a/apps/web/src/lib/components/layout/header.svelte b/apps/web/src/lib/components/layout/header.svelte	(rejected hunks)
+@@ -67,6 +69,14 @@
+     <div class="container mx-auto flex h-12 items-center justify-between md:h-16">
+         <!-- 로고 -->
+         <div class="flex items-center">
++                        <!-- 햄버거 메뉴 (추가 메뉴) - 2xl 미만에서 보임 -->
++            <button
++                onclick={toggleDrawer}
++                class="rounded-lg ps-4 pe-2 md:ps-0 md:-ml-1 transition-colors hover:bg-dusty-100 dark:hover:bg-dusty-800 2xl:hidden block mr-3"
++                aria-label="추가 메뉴"
++            >
++                <AlignJustify class="h-6 w-6 text-dusty-600 dark:text-dusty-400" />
++            </button>
+             <a href="/" class="flex items-center">
+                 <img src={Logo} alt="damoang" class="h-12" />
+             </a>

@@ -1,0 +1,1379 @@
+From e2cdefd4209cd62fc6934769cdc7144e15943d37 Mon Sep 17 00:00:00 2001
+From: playonly23 <tobini201@gmail.com>
+Date: Wed, 5 Nov 2025 14:38:46 +0900
+Subject: [PATCH 1/6] fix / layout padding
+
+---
+ apps/web/src/routes/+layout.svelte         | 2 +-
+ apps/web/src/routes/free/+page.svelte      | 2 +-
+ apps/web/src/routes/free/[id]/+page.svelte | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/apps/web/src/routes/+layout.svelte b/apps/web/src/routes/+layout.svelte
+index b1ae75a..2dd04ef 100644
+--- a/apps/web/src/routes/+layout.svelte
++++ b/apps/web/src/routes/+layout.svelte
+@@ -67,7 +67,7 @@
+             {/if}
+ 
+             <main
+-                class="flex-1 overflow-y-auto rounded-t-xl pt-1 md:py-5 lg:pe-6 xl:min-w-[824px] 2xl:px-6"
++                class="flex-1 overflow-y-auto pt-1 md:py-5 xl:min-w-[824px] lg:pe-6 2xl:!px-9"
+             >
+                 {@render children()}
+             </main>
+diff --git a/apps/web/src/routes/free/+page.svelte b/apps/web/src/routes/free/+page.svelte
+index e1499b3..ffea6a1 100644
+--- a/apps/web/src/routes/free/+page.svelte
++++ b/apps/web/src/routes/free/+page.svelte
+@@ -46,7 +46,7 @@
+     }
+ </script>
+ 
+-<div class="container mx-auto max-w-6xl px-4 py-8">
++<div class="mx-auto pt-4">
+     <!-- 헤더 -->
+     <div class="mb-8">
+         <h1 class="text-foreground mb-2 text-3xl font-bold">자유게시판</h1>
+diff --git a/apps/web/src/routes/free/[id]/+page.svelte b/apps/web/src/routes/free/[id]/+page.svelte
+index 8506a48..4923e26 100644
+--- a/apps/web/src/routes/free/[id]/+page.svelte
++++ b/apps/web/src/routes/free/[id]/+page.svelte
+@@ -30,7 +30,7 @@
+     <meta name="description" content={data.post.content.slice(0, 150)} />
+ </svelte:head>
+ 
+-<div class="container mx-auto max-w-4xl px-4 py-8">
++<div class="mx-auto pt-2">
+     <!-- 상단 네비게이션 -->
+     <div class="mb-6">
+         <Button variant="outline" size="sm" onclick={goBack}>
+-- 
+2.43.0
+
+
+From 5491b68fc9cadda4dcaca0e04228ea6eca9a2eb3 Mon Sep 17 00:00:00 2001
+From: playonly23 <tobini201@gmail.com>
+Date: Wed, 5 Nov 2025 22:45:50 +0900
+Subject: [PATCH 2/6] fix/sidebar-design
+
+---
+ .../src/lib/components/layout/header.svelte   |  76 ++++++------
+ .../src/lib/components/layout/sidebar.svelte  | 113 ++++++++++++++++--
+ .../ui/accordion/accordion-content.svelte     |  22 ++++
+ .../ui/accordion/accordion-item.svelte        |  17 +++
+ .../ui/accordion/accordion-trigger.svelte     |  32 +++++
+ .../components/ui/accordion/accordion.svelte  |  16 +++
+ .../src/lib/components/ui/accordion/index.ts  |  16 +++
+ .../src/lib/components/ui/card/card.svelte    |   2 +-
+ apps/web/src/routes/+layout.svelte            |  12 +-
+ apps/web/src/routes/free/[id]/+page.svelte    |   8 +-
+ apps/web/src/styles/layout.css                |  10 +-
+ 11 files changed, 259 insertions(+), 65 deletions(-)
+ create mode 100644 apps/web/src/lib/components/ui/accordion/accordion-content.svelte
+ create mode 100644 apps/web/src/lib/components/ui/accordion/accordion-item.svelte
+ create mode 100644 apps/web/src/lib/components/ui/accordion/accordion-trigger.svelte
+ create mode 100644 apps/web/src/lib/components/ui/accordion/accordion.svelte
+ create mode 100644 apps/web/src/lib/components/ui/accordion/index.ts
+
+diff --git a/apps/web/src/lib/components/layout/header.svelte b/apps/web/src/lib/components/layout/header.svelte
+index f539ef7..49b113a 100644
+--- a/apps/web/src/lib/components/layout/header.svelte
++++ b/apps/web/src/lib/components/layout/header.svelte
+@@ -1,14 +1,16 @@
+ <script lang="ts">
+     import { onMount } from 'svelte';
+-    import Zap from '@lucide/svelte/icons/zap';
+     import Search from '@lucide/svelte/icons/search';
+     import User from '@lucide/svelte/icons/user';
+     import Bell from '@lucide/svelte/icons/bell';
+     import Menu from '@lucide/svelte/icons/menu';
+     import X from '@lucide/svelte/icons/x';
++    import Home from '@lucide/svelte/icons/home';
++    import Rss from '@lucide/svelte/icons/rss';
+     import Sun from '@lucide/svelte/icons/sun';
+     import Moon from '@lucide/svelte/icons/moon';
+     import Logo from '$lib/assets/logo.svg';
++    import AlignJustify from '@lucide/svelte/icons/align-justify';
+ 
+     // 스크롤 상태 관리
+     let isHeaderVisible = $state(true);
+@@ -67,6 +69,14 @@
+     <div class="container mx-auto flex h-12 items-center justify-between md:h-16">
+         <!-- 로고 -->
+         <div class="flex items-center">
++                        <!-- 햄버거 메뉴 (추가 메뉴) - 2xl 미만에서 보임 -->
++            <button
++                onclick={toggleDrawer}
++                class="rounded-lg ps-4 pe-2 md:ps-0 md:-ml-1 transition-colors hover:bg-dusty-100 dark:hover:bg-dusty-800 2xl:hidden block mr-3"
++                aria-label="추가 메뉴"
++            >
++                <AlignJustify class="h-6 w-6 text-dusty-600 dark:text-dusty-400" />
++            </button>
+             <a href="/" class="flex items-center">
+                 <img src={Logo} alt="damoang" class="h-12" />
+             </a>
+@@ -76,28 +86,18 @@
+         <nav class="hidden items-center space-x-8 md:flex">
+             <a
+                 href="/"
+-                class="text-gray-700 transition-colors hover:text-blue-600 dark:text-gray-300">홈</a
+-            >
+-            <a
+-                href="/community"
+-                class="text-gray-700 transition-colors hover:text-blue-600 dark:text-gray-300"
+-                >메뉴1</a
+-            >
+-            <a
+-                href="/marketplace"
+-                class="text-gray-700 transition-colors hover:text-blue-600 dark:text-gray-300"
+-                >메뉴2</a
+-            >
+-            <a
+-                href="/minipage"
+-                class="text-gray-700 transition-colors hover:text-blue-600 dark:text-gray-300"
+-                >메뉴3</a
++                class="flex items-center text-dusty-700 transition-colors hover:text-blue-600 dark:text-dusty-300"
+             >
++                <Home class="mr-2 h-5 w-5" />
++                홈
++            </a>
+             <a
+-                href="/about"
+-                class="text-gray-700 transition-colors hover:text-blue-600 dark:text-gray-300"
+-                >메뉴4</a
++                href="/free"
++                class="flex items-center text-dusty-700 transition-colors hover:text-blue-600 dark:text-dusty-300"
+             >
++                <Rss class="mr-2 h-5 w-5" />
++                피드
++            </a>
+         </nav>
+ 
+         <!-- 우측 아이콘 버튼들 -->
+@@ -105,35 +105,27 @@
+             <!-- 다크모드 토글 -->
+             <button
+                 onclick={toggleDarkMode}
+-                class="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
++                class="rounded-lg p-2 transition-colors hover:bg-dusty-100 dark:hover:bg-dusty-800"
+                 aria-label="다크모드 전환"
+             >
+                 {#if isDarkMode}
+                     <Sun class="h-5 w-5 text-yellow-500" />
+                 {:else}
+-                    <Moon class="h-5 w-5 text-gray-600 dark:text-gray-400" />
++                    <Moon class="h-5 w-5 text-dusty-600 dark:text-dusty-400" />
+                 {/if}
+             </button>
+ 
+-            <!-- 번개 아이콘 (빠른 메뉴) -->
+-            <button
+-                class="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+-                aria-label="빠른 메뉴"
+-            >
+-                <Zap class="h-5 w-5 text-gray-600 dark:text-gray-400" />
+-            </button>
+-
+             <!-- 검색 아이콘 -->
+             <button
+-                class="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
++                class="rounded-lg p-2 transition-colors hover:bg-dusty-100 dark:hover:bg-dusty-800"
+                 aria-label="검색"
+             >
+-                <Search class="h-5 w-5 text-gray-600 dark:text-gray-400" />
++                <Search class="h-5 w-5 text-dusty-600 dark:text-dusty-400" />
+             </button>
+ 
+             <!-- 사용자 아이콘 (로그인/프로필) -->
+             <button
+-                class="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
++                class="rounded-lg p-2 transition-colors hover:bg-dusty-100 dark:hover:bg-dusty-800"
+                 aria-label="사용자 메뉴"
+             >
+                 <User class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+@@ -141,19 +133,19 @@
+ 
+             <!-- 알림 아이콘 -->
+             <button
+-                class="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
++                class="rounded-lg p-2 transition-colors hover:bg-dusty-100 dark:hover:bg-dusty-800"
+                 aria-label="알림"
+             >
+-                <Bell class="h-5 w-5 text-gray-600 dark:text-gray-400" />
++                <Bell class="h-5 w-5 text-dusty-600 dark:text-dusty-400" />
+             </button>
+ 
+             <!-- 햄버거 메뉴 (추가 메뉴) -->
+             <button
+                 onclick={toggleDrawer}
+-                class="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
++                class="rounded-lg p-2 transition-colors hover:bg-dusty-100 dark:hover:bg-dusty-800 2xl:block hidden "
+                 aria-label="추가 메뉴"
+             >
+-                <Menu class="h-5 w-5 text-gray-600 dark:text-gray-400" />
++                <Menu class="h-5 w-5 text-dusty-600 dark:text-dusty-400" />
+             </button>
+         </div>
+     </div>
+@@ -172,24 +164,24 @@
+ 
+ <!-- 드로워 메뉴 (항상 DOM에 존재, 위치만 변경) -->
+ <div
+-    class="fixed bottom-0 right-0 top-0 z-50 w-80 transform bg-white shadow-xl transition-transform duration-300 ease-in-out dark:bg-gray-900"
++    class="fixed bottom-0 right-0 top-0 z-50 w-80 transform bg-white shadow-xl transition-transform duration-300 ease-in-out dark:bg-dusty-900"
+     class:translate-x-full={!isDrawerOpen}
+     class:translate-x-0={isDrawerOpen}
+ >
+     <div class="p-6">
+         <div class="mb-8 flex items-center justify-between">
+-            <h2 class="text-xl font-bold text-gray-900 dark:text-white">추가 메뉴</h2>
++            <h2 class="text-xl font-bold text-dusty-900 dark:text-white">추가 메뉴</h2>
+             <button
+                 onclick={toggleDrawer}
+-                class="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
++                class="rounded-lg p-2 transition-colors hover:bg-dusty-100 dark:hover:bg-dusty-800"
+                 aria-label="메뉴 닫기"
+             >
+-                <X class="h-6 w-6 text-gray-600 dark:text-gray-400" />
++                <X class="h-6 w-6 text-dusty-600 dark:text-dusty-400" />
+             </button>
+         </div>
+ 
+         <!-- 빈 메뉴 영역 -->
+-        <div class="flex h-64 items-center justify-center text-gray-500 dark:text-gray-400">
++        <div class="flex h-64 items-center justify-center text-dusty-500 dark:text-dusty-400">
+             <p class="text-center">
+                 추가 메뉴<br />
+                 <span class="text-sm">곧 추가될 예정입니다.</span>
+diff --git a/apps/web/src/lib/components/layout/sidebar.svelte b/apps/web/src/lib/components/layout/sidebar.svelte
+index 37a0172..38c13a9 100644
+--- a/apps/web/src/lib/components/layout/sidebar.svelte
++++ b/apps/web/src/lib/components/layout/sidebar.svelte
+@@ -1,9 +1,106 @@
+-<nav class="space-y-2 p-4">
+-    <a href="/" class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">🏠 Home</a>
+-    <a href="/dashboard" class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100"
+-        >📊 Dashboard</a
++<script lang="ts">
++    import {
++        Accordion,
++        AccordionItem,
++        AccordionTrigger,
++        AccordionContent
++    } from '$lib/components/ui/accordion';
++    import { Button } from '$lib/components/ui/button';
++    import { cn } from '$lib/utils';
++    import MessageSquare from '@lucide/svelte/icons/message-square';
++    import Users from '@lucide/svelte/icons/users';
++    import CircleStar from '@lucide/svelte/icons/circle-star';
++    import Circle from '@lucide/svelte/icons/circle';
++
++    let isCollapsed = $state(false);
++
++    const communityLinks = [
++        { href: '/free', label: '자유게시판', icon: CircleStar },
++        { href: '/free', label: '자유게시판', icon: CircleStar },
++        { href: '/free', label: '자유게시판', icon: CircleStar },
++        { href: '/free', label: '자유게시판', icon: CircleStar }
++    ];
++    const gatheringLinks = [
++        { href: '/gathering/1', label: '모임1', icon: Circle },
++        { href: '/gathering/2', label: '모임2', icon: Circle },
++        { href: '/gathering/3', label: '모임3', icon: Circle },
++        { href: '/gathering/4', label: '모임4', icon: Circle },
++        { href: '/gathering/5', label: '모임5', icon: Circle }
++    ];
++</script>
++
++<div
++    data-collapsed={isCollapsed}
++    class="group flex flex-col gap-4 py-2 pe-3 data-[collapsed=true]:py-2"
++>
++    <nav
++        class="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2"
+     >
+-    <a href="/settings" class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100"
+-        >⚙️ Settings</a
+-    >
+-</nav>
++        <Accordion type="multiple" value={['item-1']} class="w-full">
++            <!-- 커뮤니티 -->
++            <AccordionItem value="item-1" class="border-none">
++                <AccordionTrigger
++                    class={cn(
++                        'cursor-pointer',
++                        'hover:no-underline',
++                        isCollapsed &&
++                            'flex justify-center [&[data-state=open]>div>svg.lucide-chevron-down]:hidden'
++                    )}
++                >
++                    <div class=" flex items-center gap-2">
++                        <MessageSquare class="text-dusty-400 size-5" />
++                        <span class={cn('font-semibold', isCollapsed && 'hidden')}>커뮤니티</span>
++                    </div>
++                </AccordionTrigger>
++                <AccordionContent class="pb-1">
++                    <div class="relative ms-2 overflow-hidden rounded-lg p-[1px]">
++                        <div
++                            class="from-border absolute inset-0 rounded-lg bg-gradient-to-r to-transparent to-[4%]"
++                        ></div>
++                        <div class="bg-background relative space-y-1 rounded-lg py-1 ps-1">
++                            {#each communityLinks as link}
++                                <Button
++                                    variant="ghost"
++                                    class="w-full justify-start gap-2"
++                                    href={link.href}
++                                >
++                                    {link.label}
++                                    <!-- <svelte:component this={link.icon} class="size-4" /> -->
++                                </Button>
++                            {/each}
++                        </div>
++                    </div>
++                </AccordionContent>
++            </AccordionItem>
++
++            <!-- 모임 -->
++            <AccordionItem value="item-2" class="border-none">
++                <AccordionTrigger class="cursor-pointer hover:no-underline">
++                    <div class=" flex items-center gap-2">
++                        <Users class="text-dusty-400 size-5" />
++                        <span class={cn('font-semibold', isCollapsed && 'hidden')}>모임</span>
++                    </div>
++                </AccordionTrigger>
++                <AccordionContent class="space-y-1 pb-1">
++                    <div class="relative ms-2 overflow-hidden rounded-lg p-[1px]">
++                        <div
++                            class="from-border absolute inset-0 rounded-lg bg-gradient-to-r to-transparent to-[4%]"
++                        ></div>
++                        <div class="bg-background relative space-y-1 rounded-lg py-1 ps-1">
++                            {#each gatheringLinks as link}
++                                <Button
++                                    variant="ghost"
++                                    class="w-full justify-start gap-2"
++                                    href={link.href}
++                                >
++                                    {link.label}
++                                    <!-- <svelte:component this={link.icon} class="size-4" /> -->
++                                </Button>
++                            {/each}
++                        </div>
++                    </div>
++                </AccordionContent>
++            </AccordionItem>
++        </Accordion>
++    </nav>
++</div>
+diff --git a/apps/web/src/lib/components/ui/accordion/accordion-content.svelte b/apps/web/src/lib/components/ui/accordion/accordion-content.svelte
+new file mode 100644
+index 0000000..cf7045e
+--- /dev/null
++++ b/apps/web/src/lib/components/ui/accordion/accordion-content.svelte
+@@ -0,0 +1,22 @@
++<script lang="ts">
++	import { Accordion as AccordionPrimitive } from "bits-ui";
++	import { cn, type WithoutChild } from "$lib/utils.js";
++
++	let {
++		ref = $bindable(null),
++		class: className,
++		children,
++		...restProps
++	}: WithoutChild<AccordionPrimitive.ContentProps> = $props();
++</script>
++
++<AccordionPrimitive.Content
++	bind:ref
++	data-slot="accordion-content"
++	class="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden text-sm"
++	{...restProps}
++>
++	<div class={cn("pb-4 pt-0", className)}>
++		{@render children?.()}
++	</div>
++</AccordionPrimitive.Content>
+diff --git a/apps/web/src/lib/components/ui/accordion/accordion-item.svelte b/apps/web/src/lib/components/ui/accordion/accordion-item.svelte
+new file mode 100644
+index 0000000..780545c
+--- /dev/null
++++ b/apps/web/src/lib/components/ui/accordion/accordion-item.svelte
+@@ -0,0 +1,17 @@
++<script lang="ts">
++	import { Accordion as AccordionPrimitive } from "bits-ui";
++	import { cn } from "$lib/utils.js";
++
++	let {
++		ref = $bindable(null),
++		class: className,
++		...restProps
++	}: AccordionPrimitive.ItemProps = $props();
++</script>
++
++<AccordionPrimitive.Item
++	bind:ref
++	data-slot="accordion-item"
++	class={cn("border-b last:border-b-0", className)}
++	{...restProps}
++/>
+diff --git a/apps/web/src/lib/components/ui/accordion/accordion-trigger.svelte b/apps/web/src/lib/components/ui/accordion/accordion-trigger.svelte
+new file mode 100644
+index 0000000..0027cdd
+--- /dev/null
++++ b/apps/web/src/lib/components/ui/accordion/accordion-trigger.svelte
+@@ -0,0 +1,32 @@
++<script lang="ts">
++	import { Accordion as AccordionPrimitive } from "bits-ui";
++	import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
++	import { cn, type WithoutChild } from "$lib/utils.js";
++
++	let {
++		ref = $bindable(null),
++		class: className,
++		level = 3,
++		children,
++		...restProps
++	}: WithoutChild<AccordionPrimitive.TriggerProps> & {
++		level?: AccordionPrimitive.HeaderProps["level"];
++	} = $props();
++</script>
++
++<AccordionPrimitive.Header {level} class="flex">
++	<AccordionPrimitive.Trigger
++		data-slot="accordion-trigger"
++		bind:ref
++		class={cn(
++			"focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 items-start justify-between gap-4 rounded-md py-4 text-left text-sm font-medium outline-none transition-all hover:underline focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180",
++			className
++		)}
++		{...restProps}
++	>
++		{@render children?.()}
++		<ChevronDownIcon
++			class="text-muted-foreground pointer-events-none size-4 shrink-0 translate-y-0.5 transition-transform duration-200"
++		/>
++	</AccordionPrimitive.Trigger>
++</AccordionPrimitive.Header>
+diff --git a/apps/web/src/lib/components/ui/accordion/accordion.svelte b/apps/web/src/lib/components/ui/accordion/accordion.svelte
+new file mode 100644
+index 0000000..117ee37
+--- /dev/null
++++ b/apps/web/src/lib/components/ui/accordion/accordion.svelte
+@@ -0,0 +1,16 @@
++<script lang="ts">
++	import { Accordion as AccordionPrimitive } from "bits-ui";
++
++	let {
++		ref = $bindable(null),
++		value = $bindable(),
++		...restProps
++	}: AccordionPrimitive.RootProps = $props();
++</script>
++
++<AccordionPrimitive.Root
++	bind:ref
++	bind:value={value as never}
++	data-slot="accordion"
++	{...restProps}
++/>
+diff --git a/apps/web/src/lib/components/ui/accordion/index.ts b/apps/web/src/lib/components/ui/accordion/index.ts
+new file mode 100644
+index 0000000..ac343a1
+--- /dev/null
++++ b/apps/web/src/lib/components/ui/accordion/index.ts
+@@ -0,0 +1,16 @@
++import Root from "./accordion.svelte";
++import Content from "./accordion-content.svelte";
++import Item from "./accordion-item.svelte";
++import Trigger from "./accordion-trigger.svelte";
++
++export {
++	Root,
++	Content,
++	Item,
++	Trigger,
++	//
++	Root as Accordion,
++	Content as AccordionContent,
++	Item as AccordionItem,
++	Trigger as AccordionTrigger,
++};
+diff --git a/apps/web/src/lib/components/ui/card/card.svelte b/apps/web/src/lib/components/ui/card/card.svelte
+index 9806a34..2d41245 100644
+--- a/apps/web/src/lib/components/ui/card/card.svelte
++++ b/apps/web/src/lib/components/ui/card/card.svelte
+@@ -14,7 +14,7 @@
+     bind:this={ref}
+     data-slot="card"
+     class={cn(
+-        'bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm',
++        'bg-card text-card-foreground flex flex-col gap-6 rounded-lg border py-6',
+         className
+     )}
+     {...restProps}
+diff --git a/apps/web/src/routes/+layout.svelte b/apps/web/src/routes/+layout.svelte
+index 2dd04ef..d373b61 100644
+--- a/apps/web/src/routes/+layout.svelte
++++ b/apps/web/src/routes/+layout.svelte
+@@ -54,32 +54,30 @@
+         <div class="mx-auto flex w-full flex-1">
+             {#if snbPosition === 'right'}
+                 <aside
+-                    class="bg-subtle border-border my-5 hidden max-w-[320px] rounded-md border lg:block lg:flex-1"
++                    class="bg-subtle border-border my-5 hidden w-[320px] flex-shrink-0 rounded-md border lg:block"
+                 >
+                     <!-- 여기에 오른쪽 사이드바 내용 추가 -->
+                     <Panel />
+                 </aside>
+             {/if}
+             {#if snbPosition === 'left'}
+-                <aside class="bg-background hidden w-[14.5rem] 2xl:block">
++                <aside class="bg-background hidden lg:block lg:w-[72px] 2xl:!w-[230px]">
+                     <Sidebar />
+                 </aside>
+             {/if}
+ 
+-            <main
+-                class="flex-1 overflow-y-auto pt-1 md:py-5 xl:min-w-[824px] lg:pe-6 2xl:!px-9"
+-            >
++            <main class="box-content flex-1 overflow-y-auto pt-1 md:py-5 lg:pe-6 2xl:!px-9">
+                 {@render children()}
+             </main>
+             {#if snbPosition === 'right'}
+-                <aside class="bg-background hidden w-[14.5rem] 2xl:block">
++                <aside class="bg-background hidden lg:block lg:w-[72px] 2xl:!w-[230px]">
+                     <Sidebar />
+                 </aside>
+             {/if}
+ 
+             {#if snbPosition === 'left'}
+                 <aside
+-                    class="bg-subtle border-border my-5 hidden max-w-[20rem] rounded-md border lg:block lg:flex-1"
++                    class="bg-subtle border-border my-5 hidden w-[320px] flex-shrink-0 rounded-md border lg:block"
+                 >
+                     <!-- 여기에 오른쪽 사이드바 내용 추가 -->
+                     <Panel />
+diff --git a/apps/web/src/routes/free/[id]/+page.svelte b/apps/web/src/routes/free/[id]/+page.svelte
+index 4923e26..8b959b7 100644
+--- a/apps/web/src/routes/free/[id]/+page.svelte
++++ b/apps/web/src/routes/free/[id]/+page.svelte
+@@ -71,12 +71,10 @@
+                     <span>💬 {data.post.comments_count.toLocaleString()}</span>
+                 </div>
+             </div>
+-        </CardHeader>
+-    </Card>
++
+ 
+     <!-- 게시글 본문 -->
+-    <Card class="mb-6">
+-        <CardContent class="prose dark:prose-invert max-w-none pt-6">
++
+             <div class="text-foreground whitespace-pre-wrap">
+                 {data.post.content}
+             </div>
+@@ -93,7 +91,7 @@
+                     {/each}
+                 </div>
+             {/if}
+-        </CardContent>
++        </CardHeader>
+     </Card>
+ 
+     <!-- 하단 액션 버튼 -->
+diff --git a/apps/web/src/styles/layout.css b/apps/web/src/styles/layout.css
+index bfdf8a8..2ffc98b 100644
+--- a/apps/web/src/styles/layout.css
++++ b/apps/web/src/styles/layout.css
+@@ -12,14 +12,20 @@
+   @media (min-width: 1440px) {
+     .snb-backdrop-left {
+       @apply border-l rounded-tl-xl;
+-      left: calc(50% - 720px + 14.5rem + 1.5rem);
++      left: calc(50% - 720px + 230px + 1.5rem);
+       right: 0;
++      box-shadow:
++        inset 2px 2px 4px rgb(0 0 0 / 0.06),
++        inset -2px -2px 4px rgb(255 255 255 / 0.1);
+     }
+ 
+     .snb-backdrop-right {
+       @apply border-r rounded-tr-xl;
+       left: 0;
+-      right: calc(50% - 720px + 14.5rem + 1.5rem);
++      right: calc(50% - 720px + 230px + 1.5rem);
++      box-shadow:
++        inset -2px 2px 4px rgb(0 0 0 / 0.06),
++        inset 2px -2px 4px rgb(255 255 255 / 0.1);
+     }
+   }
+ 
+-- 
+2.43.0
+
+
+From 5f26b01b7efb0326bea329a9f92ff12aef8ad4a9 Mon Sep 17 00:00:00 2001
+From: playonly23 <tobini201@gmail.com>
+Date: Thu, 6 Nov 2025 00:31:20 +0900
+Subject: [PATCH 3/6] fix / spacing
+
+---
+ apps/web/src/app.css                          | 16 +++++------
+ .../src/lib/components/layout/sidebar.svelte  |  6 ++---
+ apps/web/src/routes/+layout.svelte            |  4 +--
+ apps/web/src/routes/free/+page.svelte         | 16 +++++------
+ apps/web/src/routes/free/[id]/+page.svelte    | 27 +++++++++----------
+ 5 files changed, 33 insertions(+), 36 deletions(-)
+
+diff --git a/apps/web/src/app.css b/apps/web/src/app.css
+index 924da6f..3432183 100644
+--- a/apps/web/src/app.css
++++ b/apps/web/src/app.css
+@@ -20,10 +20,10 @@
+     --popover-foreground: oklch(0.129 0.042 264.695);
+     --primary: oklch(0.208 0.042 265.755);
+     --primary-foreground: oklch(0.984 0.003 247.858);
+-    --secondary: oklch(0.968 0.007 247.896);
+-    --secondary-foreground: oklch(0.208 0.042 265.755);
+-    --muted: oklch(0.968 0.007 247.896);
+-    --muted-foreground: oklch(0.554 0.046 257.417);
++    --secondary: oklch(0.8941 0.0034 207.92);
++    --secondary-foreground: oklch(0.5579 0.0161 196.7);
++    --muted: oklch(0.939 0.002 247.845);
++    --muted-foreground: oklch(0.675 0.012 196.88);
+     --accent: oklch(0.968 0.007 247.896);
+     --accent-foreground: oklch(0.208 0.042 265.755);
+     --destructive: oklch(0.577 0.245 27.325);
+@@ -56,10 +56,10 @@
+     --popover-foreground: oklch(0.984 0.003 247.858);
+     --primary: oklch(0.929 0.013 255.508);
+     --primary-foreground: oklch(0.208 0.042 265.755);
+-    --secondary: oklch(0.279 0.041 260.031);
+-    --secondary-foreground: oklch(0.984 0.003 247.858);
+-    --muted: oklch(0.279 0.041 260.031);
+-    --muted-foreground: oklch(0.704 0.04 256.788);
++    --secondary: oklch(0.358 0.0094 196.74);
++    --secondary-foreground: oklch(0.8019 0.007 200.78);
++    --muted: oklch(0.357 0.001 196.74);
++    --muted-foreground: oklch(0.770 0.008 196.99);
+     --accent: oklch(0.279 0.041 260.031);
+     --accent-foreground: oklch(0.984 0.003 247.858);
+     --destructive: oklch(0.704 0.191 22.216);
+diff --git a/apps/web/src/lib/components/layout/sidebar.svelte b/apps/web/src/lib/components/layout/sidebar.svelte
+index 38c13a9..0933b16 100644
+--- a/apps/web/src/lib/components/layout/sidebar.svelte
++++ b/apps/web/src/lib/components/layout/sidebar.svelte
+@@ -31,7 +31,7 @@
+ 
+ <div
+     data-collapsed={isCollapsed}
+-    class="group flex flex-col gap-4 py-2 pe-3 data-[collapsed=true]:py-2"
++    class="group flex h-full flex-col gap-4 overflow-y-auto py-2 pe-3 data-[collapsed=true]:py-2"
+ >
+     <nav
+         class="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2"
+@@ -61,7 +61,7 @@
+                             {#each communityLinks as link}
+                                 <Button
+                                     variant="ghost"
+-                                    class="w-full justify-start gap-2"
++                                    class="w-full justify-start gap-2 hover:bg-dusty-100 dark:hover:bg-dusty-800"
+                                     href={link.href}
+                                 >
+                                     {link.label}
+@@ -90,7 +90,7 @@
+                             {#each gatheringLinks as link}
+                                 <Button
+                                     variant="ghost"
+-                                    class="w-full justify-start gap-2"
++                                    class="w-full justify-start gap-2 hover:bg-dusty-100 dark:hover:bg-dusty-800"
+                                     href={link.href}
+                                 >
+                                     {link.label}
+diff --git a/apps/web/src/routes/+layout.svelte b/apps/web/src/routes/+layout.svelte
+index d373b61..4ae54d0 100644
+--- a/apps/web/src/routes/+layout.svelte
++++ b/apps/web/src/routes/+layout.svelte
+@@ -61,7 +61,7 @@
+                 </aside>
+             {/if}
+             {#if snbPosition === 'left'}
+-                <aside class="bg-background hidden lg:block lg:w-[72px] 2xl:!w-[230px]">
++                <aside class="bg-background sticky top-12 md:top-16 self-start hidden h-[calc(100vh-3rem)] md:h-[calc(100vh-4rem)] 2xl:block 2xl:!w-[230px]">
+                     <Sidebar />
+                 </aside>
+             {/if}
+@@ -70,7 +70,7 @@
+                 {@render children()}
+             </main>
+             {#if snbPosition === 'right'}
+-                <aside class="bg-background hidden lg:block lg:w-[72px] 2xl:!w-[230px]">
++                <aside class="bg-background hidden 2xl:block 2xl:!w-[230px]">
+                     <Sidebar />
+                 </aside>
+             {/if}
+diff --git a/apps/web/src/routes/free/+page.svelte b/apps/web/src/routes/free/+page.svelte
+index ffea6a1..604b7c3 100644
+--- a/apps/web/src/routes/free/+page.svelte
++++ b/apps/web/src/routes/free/+page.svelte
+@@ -50,7 +50,7 @@
+     <!-- 헤더 -->
+     <div class="mb-8">
+         <h1 class="text-foreground mb-2 text-3xl font-bold">자유게시판</h1>
+-        <p class="text-muted-foreground">다모앙 커뮤니티의 자유로운 소통 공간입니다.</p>
++        <p class="text-secondary-foreground">다모앙 커뮤니티의 자유로운 소통 공간입니다.</p>
+     </div>
+ 
+     <!-- 에러 메시지 -->
+@@ -65,19 +65,19 @@
+     <!-- 게시글 목록 -->
+     <div class="space-y-4">
+         {#if data.posts.length === 0}
+-            <Card>
++            <Card class="bg-background">
+                 <CardContent class="py-12 text-center">
+-                    <p class="text-muted-foreground">게시글이 없습니다.</p>
++                    <p class="text-secondary-foreground">게시글이 없습니다.</p>
+                 </CardContent>
+             </Card>
+         {:else}
+             {#each data.posts as post}
+-                <Card class="hover:shadow-md transition-shadow cursor-pointer" onclick={() => goToPost(post.id)}>
++                <Card class="bg-background hover:shadow-md transition-shadow cursor-pointer" onclick={() => goToPost(post.id)}>
+                     <CardHeader>
+                         <div class="flex items-start justify-between gap-4">
+                             <div class="flex-1 min-w-0">
+                                 <CardTitle class="text-foreground mb-2 truncate">{post.title}</CardTitle>
+-                                <div class="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
++                                <div class="text-secondary-foreground flex flex-wrap items-center gap-2 text-sm">
+                                     <span>{post.author}</span>
+                                     <span>•</span>
+                                     <span>{formatDate(post.created_at)}</span>
+@@ -95,10 +95,10 @@
+                         </div>
+                     </CardHeader>
+                     <CardContent>
+-                        <p class="text-muted-foreground mb-4 line-clamp-2">
++                        <p class="text-secondary-foreground mb-4 line-clamp-2">
+                             {post.content}
+                         </p>
+-                        <div class="text-muted-foreground flex items-center gap-4 text-sm">
++                        <div class="text-secondary-foreground flex items-center gap-4 text-sm">
+                             <span>👍 {post.likes}</span>
+                             <span>💬 {post.comments_count}</span>
+                         </div>
+@@ -145,7 +145,7 @@
+             </Button>
+         </div>
+ 
+-        <p class="text-muted-foreground mt-4 text-center text-sm">
++        <p class="text-secondary-foreground mt-4 text-center text-sm">
+             전체 {data.pagination.total.toLocaleString()}개 중 {data.pagination.page} / {data.pagination.totalPages} 페이지
+         </p>
+     {/if}
+diff --git a/apps/web/src/routes/free/[id]/+page.svelte b/apps/web/src/routes/free/[id]/+page.svelte
+index 8b959b7..627c32a 100644
+--- a/apps/web/src/routes/free/[id]/+page.svelte
++++ b/apps/web/src/routes/free/[id]/+page.svelte
+@@ -33,14 +33,12 @@
+ <div class="mx-auto pt-2">
+     <!-- 상단 네비게이션 -->
+     <div class="mb-6">
+-        <Button variant="outline" size="sm" onclick={goBack}>
+-            ← 목록으로
+-        </Button>
++        <Button variant="outline" size="sm" onclick={goBack}>← 목록으로</Button>
+     </div>
+ 
+     <!-- 게시글 헤더 -->
+-    <Card class="mb-6">
+-        <CardHeader class="space-y-4">
++    <Card class="bg-background ">
++        <CardHeader class="space-y-3">
+             <div>
+                 {#if data.post.tags && data.post.tags.length > 0}
+                     <div class="mb-3 flex flex-wrap gap-2">
+@@ -54,28 +52,29 @@
+ 
+             <div class="border-border flex flex-wrap items-center gap-4 border-t pt-4">
+                 <div class="flex items-center gap-2">
+-                    <div class="bg-primary text-primary-foreground flex size-10 items-center justify-center rounded-full">
++                    <div
++                        class="bg-primary text-primary-foreground flex size-10 items-center justify-center rounded-full"
++                    >
+                         {data.post.author.charAt(0).toUpperCase()}
+                     </div>
+                     <div>
+                         <p class="text-foreground font-medium">{data.post.author}</p>
+-                        <p class="text-muted-foreground text-sm">
++                        <p class="text-secondary-foreground text-sm">
+                             {formatDate(data.post.created_at)}
+                         </p>
+                     </div>
+                 </div>
+ 
+-                <div class="text-muted-foreground ml-auto flex gap-4 text-sm">
++                <div class="text-secondary-foreground ml-auto flex gap-4 text-sm">
+                     <span>조회 {data.post.views.toLocaleString()}</span>
+                     <span>👍 {data.post.likes.toLocaleString()}</span>
+                     <span>💬 {data.post.comments_count.toLocaleString()}</span>
+                 </div>
+             </div>
+ 
++            <!-- 게시글 본문 -->
+ 
+-    <!-- 게시글 본문 -->
+-
+-            <div class="text-foreground whitespace-pre-wrap">
++            <div class="text-foreground whitespace-pre-wrap mt-8">
+                 {data.post.content}
+             </div>
+ 
+@@ -95,10 +94,8 @@
+     </Card>
+ 
+     <!-- 하단 액션 버튼 -->
+-    <div class="flex items-center justify-between">
+-        <Button variant="outline" onclick={goBack}>
+-            ← 목록으로
+-        </Button>
++    <div class="mt-4 flex items-center justify-between">
++        <Button variant="outline" onclick={goBack}>← 목록으로</Button>
+ 
+         <div class="flex gap-2">
+             <Button variant="outline" size="sm">
+-- 
+2.43.0
+
+
+From 4f35de9ccd9c9942f1f8500b46f015b277a043fe Mon Sep 17 00:00:00 2001
+From: playonly23 <tobini201@gmail.com>
+Date: Thu, 6 Nov 2025 01:50:32 +0900
+Subject: [PATCH 4/6] feature/3d button
+
+---
+ .../lib/components/ui/neo-key-button/index.ts |  29 +++
+ .../ui/neo-key-button/neo-key-button.svelte   | 207 ++++++++++++++++++
+ apps/web/src/routes/free/[id]/+page.svelte    |  25 ++-
+ 3 files changed, 260 insertions(+), 1 deletion(-)
+ create mode 100644 apps/web/src/lib/components/ui/neo-key-button/index.ts
+ create mode 100644 apps/web/src/lib/components/ui/neo-key-button/neo-key-button.svelte
+
+diff --git a/apps/web/src/lib/components/ui/neo-key-button/index.ts b/apps/web/src/lib/components/ui/neo-key-button/index.ts
+new file mode 100644
+index 0000000..581cebd
+--- /dev/null
++++ b/apps/web/src/lib/components/ui/neo-key-button/index.ts
+@@ -0,0 +1,29 @@
++import Root from './neo-key-button.svelte';
++import type { HTMLButtonAttributes } from 'svelte/elements';
++
++// Props 타입 정의
++type NeoKeyButtonSize = 'sm' | 'md' | 'lg';
++
++interface NeoKeyButtonProps extends HTMLButtonAttributes {
++  size?: NeoKeyButtonSize;
++  liked?: boolean;
++}
++
++// Variants 함수 (옵션)
++const NeoKeyButtonVariants = {
++  size: {
++    sm: { button: 'w-12 h-12 text-xl', radius: '6px', translate: '8px' },
++    md: { button: 'w-14 h-14 text-2xl', radius: '7px', translate: '10px' },
++    lg: { button: 'w-16 h-16 text-3xl', radius: '8px', translate: '12px' }
++  }
++};
++
++export {
++  Root,
++  type NeoKeyButtonProps as Props,
++  //
++  Root as NeoKeyButton,
++  NeoKeyButtonVariants,
++  type NeoKeyButtonProps,
++  type NeoKeyButtonSize
++};
+\ No newline at end of file
+diff --git a/apps/web/src/lib/components/ui/neo-key-button/neo-key-button.svelte b/apps/web/src/lib/components/ui/neo-key-button/neo-key-button.svelte
+new file mode 100644
+index 0000000..eb76e3d
+--- /dev/null
++++ b/apps/web/src/lib/components/ui/neo-key-button/neo-key-button.svelte
+@@ -0,0 +1,207 @@
++<script lang="ts">
++  import { cn } from '$lib/utils';
++  import type { HTMLButtonAttributes } from 'svelte/elements';
++  
++  type Size = 'sm' | 'md' | 'lg';
++  
++  interface Props extends HTMLButtonAttributes {
++    size?: Size;
++    liked?: boolean;
++    pressed?: boolean; // 애니메이션 트리거용
++    class?: string;
++  }
++  
++  let {
++    size = 'md',
++    liked = $bindable(false),
++    pressed = $bindable(false),
++    disabled = undefined,
++    class: className = '',
++    onclick,
++    ...restProps
++  }: Props = $props();
++  
++  const sizes = {
++    sm: { button: 'w-12 h-12 text-xl', radius: '6px', translate: '8px' },
++    md: { button: 'w-14 h-14 text-2xl', radius: '7px', translate: '10px' },
++    lg: { button: 'w-16 h-16 text-3xl', radius: '8px', translate: '12px' }
++  };
++  
++  const currentSize = sizes[size];
++  
++  function handleClick(event: MouseEvent) {
++    if (!disabled) {
++      liked = !liked;
++      pressed = true;
++      
++      // 애니메이션 후 pressed 상태 초기화
++      setTimeout(() => {
++        pressed = false;
++      }, 200);
++      
++      // 사용자 정의 onclick 핸들러 실행
++      onclick?.(event);
++    }
++  }
++  
++  let showTooltip = $state(false);
++</script>
++
++<div class={cn("flex", className)}>
++  <div style="transform: translateY(-{currentSize.translate})">
++    <button
++      type="button"
++      class={cn(
++        "btn-3d",
++        currentSize.button,
++        "flex justify-center items-center",
++        disabled ? 'opacity-50 cursor-not-allowed' : ''
++      )}
++      style="--btn-radius: {currentSize.radius}; --btn-translate: {currentSize.translate};"
++      onclick={handleClick}
++      {disabled}
++      onmouseenter={() => showTooltip = true}
++      onmouseleave={() => showTooltip = false}
++      {...restProps}
++    >
++      <span class="btn-icon {pressed ? 'active' : ''}">
++        <slot />
++      </span>
++      <span class="sr-only">
++        <slot name="label">{liked ? '좋아요!' : '좋아요'}</slot>
++      </span>
++    </button>
++    
++    {#if showTooltip && !disabled}
++      <div class="tooltip">
++        <slot name="tooltip">{liked ? '좋아요!' : '좋아요'}</slot>
++      </div>
++    {/if}
++  </div>
++</div>
++
++<style>
++  /* 3D Button Base Styles */
++  .btn-3d {
++    border-radius: var(--btn-radius);
++    background-color: var(--color-background);
++    border: 1px solid var(--color-border);
++    transform-style: preserve-3d;
++    position: relative;
++    z-index: 2;
++    transition: transform 150ms cubic-bezier(0, 0, 0.58, 1),
++      background-color 150ms cubic-bezier(0, 0, 0.58, 1);
++  }
++
++  .btn-3d::before {
++    position: absolute;
++    content: "";
++    inset: 0;
++    background-color: var(--tw-bg-secondary, #f3f4f6);
++    border-radius: calc(var(--btn-radius) - 1px);
++    box-shadow: 
++      0 0 0 1px var(--color-border),
++      0 8px 6px 1px rgba(0, 0, 0, 0.15);
++    transform: translate3d(0, var(--btn-translate), -12px);
++    transition: transform 150ms cubic-bezier(0, 0, 0.58, 1),
++      box-shadow 150ms cubic-bezier(0, 0, 0.58, 1);
++  }
++
++  .btn-3d:hover:not(:disabled) {
++    background-color: var(--tw-bg-tertiary, #f9fafb);
++    transform: translate(0, calc(var(--btn-translate) * 0.4));
++  }
++
++  .btn-3d:hover:not(:disabled)::before {
++    box-shadow: 
++      0 0 0 1px var(--tw-border-primary, #e5e7eb),
++      0 6px 4px 1px rgba(0, 0, 0, 0.15);
++    transform: translate3d(0, calc(var(--btn-translate) * 0.6), -12px);
++  }
++
++  .btn-3d:active:not(:disabled) {
++    background-color: var(--tw-bg-secondary, #f3f4f6);
++    transform: translate(0, var(--btn-translate));
++  }
++
++  .btn-3d:active:not(:disabled)::before {
++    box-shadow: none;
++    transform: translate3d(0, 0px, -12px);
++  }
++
++  /* Icon Animation */
++  .btn-icon {
++    display: inline-flex;
++    align-items: center;
++    justify-content: center;
++    transition: color 0.3s ease, transform 0.2s ease;
++  }
++
++  .btn-icon.active {
++    transform: scale(1.1);
++  }
++
++    /* slot 내부 아이콘에 대한 스타일 */
++  .btn-icon :global(svg) {
++    width: 1em;
++    height: 1em;
++    stroke: currentColor;
++  }
++
++  /* Tooltip */
++  .tooltip {
++    position: absolute;
++    bottom: 100%;
++    left: 50%;
++    transform: translateX(-50%);
++    margin-bottom: 8px;
++    padding: 4px 8px;
++    background-color: rgba(0, 0, 0, 0.9);
++    color: white;
++    font-size: 12px;
++    border-radius: 4px;
++    white-space: nowrap;
++    pointer-events: none;
++    opacity: 0;
++    animation: fadeIn 0.2s ease-in forwards;
++  }
++
++  .tooltip::after {
++    content: '';
++    position: absolute;
++    top: 100%;
++    left: 50%;
++    transform: translateX(-50%);
++    border: 4px solid transparent;
++    border-top-color: rgba(0, 0, 0, 0.9);
++  }
++
++  @keyframes fadeIn {
++    to {
++      opacity: 1;
++    }
++  }
++
++  /* Dark mode support */
++  @media (prefers-color-scheme: dark) {
++    .btn-3d {
++      --tw-bg-primary: #1f2937;
++      --tw-bg-secondary: #111827;
++      --tw-bg-tertiary: #374151;
++      --tw-border-primary: #374151;
++    }
++  }
++
++  /* Screen reader only */
++  .sr-only {
++    position: absolute;
++    width: 1px;
++    height: 1px;
++    padding: 0;
++    margin: -1px;
++    overflow: hidden;
++    clip: rect(0, 0, 0, 0);
++    white-space: nowrap;
++    border-width: 0;
++  }
++</style>
+\ No newline at end of file
+diff --git a/apps/web/src/routes/free/[id]/+page.svelte b/apps/web/src/routes/free/[id]/+page.svelte
+index 627c32a..c9f2305 100644
+--- a/apps/web/src/routes/free/[id]/+page.svelte
++++ b/apps/web/src/routes/free/[id]/+page.svelte
+@@ -4,6 +4,8 @@
+     import { Badge } from '$lib/components/ui/badge/index.js';
+     import { Button } from '$lib/components/ui/button/index.js';
+     import type { PageData } from './$types.js';
++    import { NeoKeyButton } from '$lib/components/ui/neo-key-button/index.js';
++    import Heart from '@lucide/svelte/icons/heart';
+ 
+     let { data }: { data: PageData } = $props();
+ 
+@@ -23,6 +25,8 @@
+     function goBack(): void {
+         goto('/free');
+     }
++
++    let isLiked = $state(false);
+ </script>
+ 
+ <svelte:head>
+@@ -74,7 +78,7 @@
+ 
+             <!-- 게시글 본문 -->
+ 
+-            <div class="text-foreground whitespace-pre-wrap mt-8">
++            <div class="text-foreground mt-8 whitespace-pre-wrap">
+                 {data.post.content}
+             </div>
+ 
+@@ -90,6 +94,25 @@
+                     {/each}
+                 </div>
+             {/if}
++            <div class="mt-8 mb-3">
++                <div class="border border-border flex w-fit items-center rounded-[7px]">
++                    <NeoKeyButton
++                        bind:liked={isLiked}
++                        size="sm"
++                        class="text-dusty-700 justify-start"
++                    >
++                        {#if isLiked}
++                            <Heart class="fill-red-500 text-red-500 !h-6 !w-6" />
++                        {:else}
++                            <Heart class="!h-6 !w-6" />
++                        {/if}
++                    </NeoKeyButton>
++                    <!-- 좋아요 개수 -->
++                    <span class="block px-4 text-sm font-semibold">
++                        {isLiked ? data.post.likes + 1 : data.post.likes}
++                    </span>
++                </div>
++            </div>
+         </CardHeader>
+     </Card>
+ 
+-- 
+2.43.0
+
+
+From 5fbe06603fbabdc894a11f99b4624efc094dff47 Mon Sep 17 00:00:00 2001
+From: playonly23 <tobini201@gmail.com>
+Date: Thu, 6 Nov 2025 11:28:44 +0900
+Subject: [PATCH 5/6] fix/button status color
+
+---
+ .../components/ui/neo-key-button/neo-key-button.svelte    | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/apps/web/src/lib/components/ui/neo-key-button/neo-key-button.svelte b/apps/web/src/lib/components/ui/neo-key-button/neo-key-button.svelte
+index eb76e3d..a08287d 100644
+--- a/apps/web/src/lib/components/ui/neo-key-button/neo-key-button.svelte
++++ b/apps/web/src/lib/components/ui/neo-key-button/neo-key-button.svelte
+@@ -97,7 +97,7 @@
+     position: absolute;
+     content: "";
+     inset: 0;
+-    background-color: var(--tw-bg-secondary, #f3f4f6);
++    background-color: var(--color-subtle);
+     border-radius: calc(var(--btn-radius) - 1px);
+     box-shadow: 
+       0 0 0 1px var(--color-border),
+@@ -108,19 +108,19 @@
+   }
+ 
+   .btn-3d:hover:not(:disabled) {
+-    background-color: var(--tw-bg-tertiary, #f9fafb);
++    background-color: var(--color-canvas);
+     transform: translate(0, calc(var(--btn-translate) * 0.4));
+   }
+ 
+   .btn-3d:hover:not(:disabled)::before {
+     box-shadow: 
+-      0 0 0 1px var(--tw-border-primary, #e5e7eb),
++      0 0 0 1px var(--color-canvas),
+       0 6px 4px 1px rgba(0, 0, 0, 0.15);
+     transform: translate3d(0, calc(var(--btn-translate) * 0.6), -12px);
+   }
+ 
+   .btn-3d:active:not(:disabled) {
+-    background-color: var(--tw-bg-secondary, #f3f4f6);
++    background-color: var(--color-subtle);
+     transform: translate(0, var(--btn-translate));
+   }
+ 
+-- 
+2.43.0
+
+
+From ae402cef4b5311792ada4a5e6a791fc9db72b37d Mon Sep 17 00:00:00 2001
+From: playonly23 <tobini201@gmail.com>
+Date: Thu, 6 Nov 2025 11:37:21 +0900
+Subject: [PATCH 6/6] feature/set darkmode color
+
+---
+ .../src/lib/components/layout/footer.svelte   | 20 +++++++++----------
+ .../src/lib/components/layout/header.svelte   |  2 +-
+ .../src/lib/components/ui/badge/badge.svelte  |  2 +-
+ apps/web/src/routes/free/[id]/+page.svelte    |  6 +++---
+ 4 files changed, 15 insertions(+), 15 deletions(-)
+
+diff --git a/apps/web/src/lib/components/layout/footer.svelte b/apps/web/src/lib/components/layout/footer.svelte
+index a5dd75e..9cc975b 100644
+--- a/apps/web/src/lib/components/layout/footer.svelte
++++ b/apps/web/src/lib/components/layout/footer.svelte
+@@ -39,13 +39,13 @@
+     ];
+ </script>
+ 
+-<footer class="border-dusty-300 bg-dusty-50 w-full border-t text-gray-800">
++<footer class="border-border bg-dusty-50 dark:bg-dusty-900 w-full border-t">
+     <!-- 상단 섹션 -->
+     <div class="mx-auto max-w-[1200px] px-4 py-8">
+         <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+             <!-- 앙포털 -->
+             <div>
+-                <h3 class="mb-4 text-lg font-semibold text-gray-900">앙포털</h3>
++                <h3 class="mb-4 text-lg font-semibold text-dusty-900 dark:text-dusty-200">앙포털</h3>
+                 <ul class="space-y-2">
+                     {#each angportalLinks as link}
+                         <li>
+@@ -53,7 +53,7 @@
+                                 href={link.href}
+                                 target={link.external ? '_blank' : undefined}
+                                 rel={link.external ? 'noopener noreferrer' : undefined}
+-                                class="text-sm text-gray-600 transition-colors hover:text-blue-600"
++                                class="text-sm text-dusty-600 dark:text-dusty-400 transition-colors hover:text-blue-600"
+                             >
+                                 {link.name}
+                             </a>
+@@ -64,7 +64,7 @@
+ 
+             <!-- 함께만들어가요 -->
+             <div>
+-                <h3 class="mb-4 text-lg font-semibold text-gray-900">함께만들어가요</h3>
++                <h3 class="mb-4 text-lg font-semibold text-dusty-900 dark:text-dusty-200">함께만들어가요</h3>
+                 <ul class="space-y-2">
+                     {#each togetherLinks as link}
+                         <li>
+@@ -72,7 +72,7 @@
+                                 href={link.href}
+                                 target={link.external ? '_blank' : undefined}
+                                 rel={link.external ? 'noopener noreferrer' : undefined}
+-                                class="text-sm text-gray-600 transition-colors hover:text-blue-600"
++                                class="text-sm text-dusty-600 dark:text-dusty-400 transition-colors hover:text-blue-600"
+                             >
+                                 {link.name}
+                             </a>
+@@ -83,7 +83,7 @@
+ 
+             <!-- 시스템 -->
+             <div>
+-                <h3 class="mb-4 text-lg font-semibold text-gray-900">시스템</h3>
++                <h3 class="mb-4 text-lg font-semibold text-dusty-900 dark:text-dusty-200">시스템</h3>
+                 <ul class="space-y-2">
+                     {#each systemLinks as link}
+                         <li>
+@@ -91,7 +91,7 @@
+                                 href={link.href}
+                                 target={link.external ? '_blank' : undefined}
+                                 rel={link.external ? 'noopener noreferrer' : undefined}
+-                                class="text-sm text-gray-600 transition-colors hover:text-blue-600"
++                                class="text-sm text-dusty-600 dark:text-dusty-400 transition-colors hover:text-blue-600"
+                             >
+                                 {link.name}
+                             </a>
+@@ -108,7 +108,7 @@
+                         <li>
+                             <a
+                                 href={link.href}
+-                                class="text-sm text-gray-600 transition-colors hover:text-blue-600"
++                                class="text-sm text-dusty-600 dark:text-dusty-400 transition-colors hover:text-blue-600"
+                             >
+                                 {link.name}
+                             </a>
+@@ -120,9 +120,9 @@
+     </div>
+ 
+     <!-- 저작권 및 연락처 섹션 -->
+-    <div class=" bg-gray-100">
++    <div class=" bg-canvas">
+         <div class="mx-auto max-w-[1200px] px-4 py-6 text-center">
+-            <div class="space-y-2 text-sm text-gray-700">
++            <div class="space-y-2 text-sm text-dusty-700 dark:text-dusty-300">
+                 <p>© SDK Co., Ltd. All rights reserved.</p>
+                 <p>
+                     제보/신고 : jebo@damoang.net, 문의(광고 그리고 모든 문의) : contact@damoang.net
+diff --git a/apps/web/src/lib/components/layout/header.svelte b/apps/web/src/lib/components/layout/header.svelte
+index 49b113a..88d1fe8 100644
+--- a/apps/web/src/lib/components/layout/header.svelte
++++ b/apps/web/src/lib/components/layout/header.svelte
+@@ -60,7 +60,7 @@
+ </script>
+ 
+ <header
+-    class="bg-background border-dusty-300 fixed left-0 right-0 top-0 z-50 transition-transform duration-300 ease-in-out"
++    class="bg-background border-border fixed left-0 right-0 top-0 z-50 transition-transform duration-300 ease-in-out"
+     class:translate-y-0={isHeaderVisible}
+     class:-translate-y-full={!isHeaderVisible}
+     class:shadow-sm={isScrolled}
+diff --git a/apps/web/src/lib/components/ui/badge/badge.svelte b/apps/web/src/lib/components/ui/badge/badge.svelte
+index 952c158..086dd56 100644
+--- a/apps/web/src/lib/components/ui/badge/badge.svelte
++++ b/apps/web/src/lib/components/ui/badge/badge.svelte
+@@ -9,7 +9,7 @@
+             variant: {
+                 default: 'bg-primary text-primary-foreground border-transparent shadow hover:bg-primary/80',
+                 secondary:
+-                    'bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80',
++                    'bg-subtle text-secondary-foreground border-transparent hover:bg-secondary/80',
+                 destructive:
+                     'bg-destructive text-destructive-foreground border-transparent shadow hover:bg-destructive/80',
+                 outline: 'text-foreground'
+diff --git a/apps/web/src/routes/free/[id]/+page.svelte b/apps/web/src/routes/free/[id]/+page.svelte
+index c9f2305..9cc2144 100644
+--- a/apps/web/src/routes/free/[id]/+page.svelte
++++ b/apps/web/src/routes/free/[id]/+page.svelte
+@@ -104,7 +104,7 @@
+                         {#if isLiked}
+                             <Heart class="fill-red-500 text-red-500 !h-6 !w-6" />
+                         {:else}
+-                            <Heart class="!h-6 !w-6" />
++                            <Heart class="!h-6 !w-6 dark:text-dusty-400" />
+                         {/if}
+                     </NeoKeyButton>
+                     <!-- 좋아요 개수 -->
+@@ -117,7 +117,7 @@
+     </Card>
+ 
+     <!-- 하단 액션 버튼 -->
+-    <div class="mt-4 flex items-center justify-between">
++    <!-- <div class="mt-4 flex items-center justify-between">
+         <Button variant="outline" onclick={goBack}>← 목록으로</Button>
+ 
+         <div class="flex gap-2">
+@@ -128,7 +128,7 @@
+                 💬 댓글 {data.post.comments_count}
+             </Button>
+         </div>
+-    </div>
++    </div> -->
+ 
+     <!-- 수정/삭제 시간 표시 -->
+     {#if data.post.updated_at !== data.post.created_at}
+-- 
+2.43.0
+

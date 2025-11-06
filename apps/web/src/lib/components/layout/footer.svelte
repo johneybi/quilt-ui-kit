@@ -53,7 +53,7 @@
                                 href={link.href}
                                 target={link.external ? '_blank' : undefined}
                                 rel={link.external ? 'noopener noreferrer' : undefined}
-                                class="text-sm text-gray-600 transition-colors hover:text-blue-600"
+                                class="text-sm text-dusty-600 dark:text-dusty-400 transition-colors hover:text-blue-600"
                             >
                                 {link.name}
                             </a>
@@ -72,7 +72,7 @@
                                 href={link.href}
                                 target={link.external ? '_blank' : undefined}
                                 rel={link.external ? 'noopener noreferrer' : undefined}
-                                class="text-sm text-gray-600 transition-colors hover:text-blue-600"
+                                class="text-sm text-dusty-600 dark:text-dusty-400 transition-colors hover:text-blue-600"
                             >
                                 {link.name}
                             </a>
@@ -91,7 +91,7 @@
                                 href={link.href}
                                 target={link.external ? '_blank' : undefined}
                                 rel={link.external ? 'noopener noreferrer' : undefined}
-                                class="text-sm text-gray-600 transition-colors hover:text-blue-600"
+                                class="text-sm text-dusty-600 dark:text-dusty-400 transition-colors hover:text-blue-600"
                             >
                                 {link.name}
                             </a>
@@ -108,7 +108,7 @@
                         <li>
                             <a
                                 href={link.href}
-                                class="text-sm text-gray-600 transition-colors hover:text-blue-600"
+                                class="text-sm text-dusty-600 dark:text-dusty-400 transition-colors hover:text-blue-600"
                             >
                                 {link.name}
                             </a>
